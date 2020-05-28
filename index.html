@@ -991,7 +991,7 @@
 
             function getDisplayPrio(zoom) {
                 if (zoom <= 10) {
-                    return 44
+                    return 50
                 } else if (zoom > 10 && zoom <= 12) {
                     return 44
                 } else if (zoom > 12 && zoom <= 14) {
@@ -1015,37 +1015,47 @@
                 var z = event.coords.z;
                 var x = event.coords.x;
                 var y = event.coords.y;
-                var tile_url = 'https://xyz.api.here.com/hub/spaces/' + singapore_places_id +
-                    '/tile/web/' + z + '_' + x + '_' + y + '?p.display_prio>' + getDisplayPrio(z) +
-                    '&access_token=' +
-                    singapore_places_token;
-                $.getJSON(tile_url, function (json) {
-                    L.geoJSON(json).getLayers().forEach(function (object) {
-                        jsonLayer.addLayer(L.geoJSON(object['feature'], {
-                            pointToLayer: function (geoJsonPoint, latlng) {
-                                const official_poi_name = geoJsonPoint[
-                                    'properties'][
-                                    'OfficialPOIName'
-                                ];
-                                const category = geoJsonPoint['properties'][
-                                    'LCMSEngCategoryName'
-                                ];
-                                const icon_id = parseInt(Math.random() * 84);
-                                return L.marker(latlng, {
-                                    icon: L.icon({
-                                        iconUrl: place_category['items'][icon_id]['icon'],
-                                        iconSize: [30, 32],
-                                        iconAnchor: [13, 32]
-                                    })
-                                }).bindPopup(official_poi_name + '<br>' +
-                                    category, {
-                                        offset: L.point(0, -20)
-                                    });
-                            }
-                        }));
-                    })
+                if (z > 10) {
+                    var tile_url = 'https://xyz.api.here.com/hub/spaces/' + singapore_places_id +
+                        '/tile/web/' + z + '_' + x + '_' + y + '?p.display_prio>' + getDisplayPrio(z) +
+                        '&access_token=' +
+                        singapore_places_token;
+                    $.getJSON(tile_url, function (json) {
+                        L.geoJSON(json).getLayers().forEach(function (object) {
+                            jsonLayer.addLayer(L.geoJSON(object['feature'], {
+                                pointToLayer: function (geoJsonPoint, latlng) {
+                                    const official_poi_name = geoJsonPoint[
+                                        'properties'][
+                                        'OfficialPOIName'
+                                    ];
+                                    const category = geoJsonPoint['properties'][
+                                        'LCMSEngCategoryName'
+                                    ];
+                                    const icon_id = parseInt(Math.random() *
+                                    84);
+                                    return L.marker(latlng, {
+                                        icon: L.icon({
+                                            iconUrl: place_category[
+                                                'items'][
+                                                icon_id
+                                            ][
+                                                'icon'
+                                            ],
+                                            iconSize: [30, 32],
+                                            iconAnchor: [13, 32]
+                                        })
+                                    }).bindPopup(official_poi_name +
+                                        '<br>' +
+                                        category, {
+                                            offset: L.point(0, -20)
+                                        });
+                                }
+                            }));
+                        })
 
-                });
+                    });
+                }
+
             });
 
             map.on('moveend', function (event) {
