@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta name="viewport" content="initial-scale=1.0, width=device-width" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <link rel="stylesheet" href="./scripts/leaflet.css" />
+    <script src="./scripts/leaflet.js"></script>
+    <script src="./scripts/jquery-3.5.0.min.js"></script>
+    <script src="./scripts/leaflet-hash.js"></script>
+    <!-- <script src="https://unpkg.com/tangram@0.15.1/dist/tangram.min.js"></script> -->
+    <!-- <script src='https://npmcdn.com/@turf/turf/turf.min.js'></script>
+    <script src="./scripts/alertifyjs/alertify.min.js"></script>
+    <script src="./scripts/leaflet.spin.min.js"></script>
+    <script src="./scripts/spin.min.js"></script>
+    <link rel="stylesheet" href="./scripts/alertifyjs/css/alertify.min.css" />
+    <link rel="stylesheet" href="./scripts/alertifyjs/css/themes/default.min.css" /> -->
+    <style>
+        html,
+        body {
+            padding: 0;
+            margin: 0;
+        }
+
+        html,
+        body,
+        #map {
+            width: 100vw;
+            height: 100%;
+            position: relative;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="map" class="map">
+        <script type="text/javascript" charset="UTF-8">
+            const singapore_places_token = 'AC92qafQTXaRYg8LnML5ggA';
+            const singapore_places_id = 'tPTeKOPa';
+            const width = screen.width;
+            const height = screen.height;
+            const screenRatio = screen.width / screen.height;
+            const pixelRatio = window.devicePixelRatio || 1;
+            const ppi = pixelRatio === 1 ? 72 : 320
+            const tile_size = pixelRatio === 1 ? 256 : 512
+            var road_Polyline_list = [];
+            var tile_xyz_list = [];
+            var heatmap_layer_loaded = false;
+            var heatmap_layer_opened = false;
+            // const default_icon_size = pixelRatio === 1 ? 36 : 36;
+            // const default_icon_anchor = pixelRatio === 1 ? 18 : 18;
+            const default_icon_size = 36;
+            const default_icon_anchor = 18;
+            const map = L.map('map', {
+                maxZoom: 19,
+                minZoom: 6,
+                zoomSnap: 1,
+                trackResize: true
+            });
+            map.on('load', function () {
+                // tile_xyz_list = get_tile_xyz(map.getBounds(), map.getZoom());
+            });
+            map.setView({
+                lat: 1.3139961,
+                lng: 103.7041626
+            }, 8);
+
+            var place_category = {
+                "items": [{
+                        "id": "eat-drink",
+                        "title": "餐飲",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/03.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/eat-drink?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": []
+                    },
+                    {
+                        "id": "restaurant",
+                        "title": "餐廳",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/03.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/restaurant?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "eat-drink"
+                        ]
+                    },
+                    {
+                        "id": "snacks-fast-food",
+                        "title": "小吃/速食",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/03.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/snacks-fast-food?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "eat-drink"
+                        ]
+                    },
+                    {
+                        "id": "bar-pub",
+                        "title": "酒吧/酒館",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/22.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/bar-pub?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "eat-drink"
+                        ]
+                    },
+                    {
+                        "id": "coffee-tea",
+                        "title": "咖啡/茶",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/23.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/coffee-tea?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "eat-drink"
+                        ]
+                    },
+                    {
+                        "id": "coffee",
+                        "title": "咖啡",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/23.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/coffee?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "coffee-tea"
+                        ]
+                    },
+                    {
+                        "id": "tea",
+                        "title": "茶",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/23.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/tea?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "coffee-tea"
+                        ]
+                    },
+                    {
+                        "id": "going-out",
+                        "title": "出行",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/05.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/going-out?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": []
+                    },
+                    {
+                        "id": "dance-night-club",
+                        "title": "舞廳或夜總會",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/33.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/dance-night-club?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "going-out"
+                        ]
+                    },
+                    {
+                        "id": "cinema",
+                        "title": "電影院",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/32.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/cinema?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "going-out"
+                        ]
+                    },
+                    {
+                        "id": "theatre-music-culture",
+                        "title": "劇院、音樂和文化中心",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/05.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/theatre-music-culture?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "going-out"
+                        ]
+                    },
+                    {
+                        "id": "casino",
+                        "title": "賭場",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/31.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/casino?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "going-out"
+                        ]
+                    },
+                    {
+                        "id": "sights-museums",
+                        "title": "景點與博物館",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/10.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/sights-museums?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": []
+                    },
+                    {
+                        "id": "landmark-attraction",
+                        "title": "地標/景點",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/38.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/landmark-attraction?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "sights-museums"
+                        ]
+                    },
+                    {
+                        "id": "museum",
+                        "title": "博物館",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/10.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/museum?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "sights-museums"
+                        ]
+                    },
+                    {
+                        "id": "transport",
+                        "title": "交通運輸",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/11.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/transport?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": []
+                    },
+                    {
+                        "id": "airport",
+                        "title": "機場",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/40.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/airport?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "transport"
+                        ]
+                    },
+                    {
+                        "id": "railway-station",
+                        "title": "火車站",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/43.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/railway-station?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "transport"
+                        ]
+                    },
+                    {
+                        "id": "public-transport",
+                        "title": "大眾運輸系統",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/11.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/public-transport?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "transport"
+                        ]
+                    },
+                    {
+                        "id": "ferry-terminal",
+                        "title": "客運碼頭",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/41.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/ferry-terminal?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "transport"
+                        ]
+                    },
+                    {
+                        "id": "taxi-stand",
+                        "title": "計程車候車站",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/42.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/taxi-stand?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "transport"
+                        ]
+                    },
+                    {
+                        "id": "accommodation",
+                        "title": "住宿",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/01.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/accommodation?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": []
+                    },
+                    {
+                        "id": "hotel",
+                        "title": "旅館",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/01.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/hotel?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "accommodation"
+                        ]
+                    },
+                    {
+                        "id": "motel",
+                        "title": "汽車旅館",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/01.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/motel?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "accommodation"
+                        ]
+                    },
+                    {
+                        "id": "hostel",
+                        "title": "青年旅館",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/01.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/hostel?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "accommodation"
+                        ]
+                    },
+                    {
+                        "id": "camping",
+                        "title": "露營",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/14.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/camping?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "accommodation"
+                        ]
+                    },
+                    {
+                        "id": "shopping",
+                        "title": "購物",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/09.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/shopping?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": []
+                    },
+                    {
+                        "id": "kiosk-convenience-store",
+                        "title": "書報亭/24 小時商店/便利店",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/09.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/kiosk-convenience-store?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "shopping"
+                        ]
+                    },
+                    {
+                        "id": "wine-and-liquor",
+                        "title": "酒類",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/09.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/wine-and-liquor?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "kiosk-convenience-store"
+                        ]
+                    },
+                    {
+                        "id": "mall",
+                        "title": "購物中心",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/09.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/mall?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "shopping"
+                        ]
+                    },
+                    {
+                        "id": "department-store",
+                        "title": "百貨公司",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/09.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/department-store?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "shopping"
+                        ]
+                    },
+                    {
+                        "id": "food-drink",
+                        "title": "食品和飲料",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/09.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/food-drink?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "shopping"
+                        ]
+                    },
+                    {
+                        "id": "bookshop",
+                        "title": "書局",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/09.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/bookshop?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "shopping"
+                        ]
+                    },
+                    {
+                        "id": "pharmacy",
+                        "title": "藥局",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/37.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/pharmacy?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "shopping"
+                        ]
+                    },
+                    {
+                        "id": "electronics-shop",
+                        "title": "電子設備",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/09.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/electronics-shop?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "shopping"
+                        ]
+                    },
+                    {
+                        "id": "hardware-house-garden-shop",
+                        "title": "自助商品/園藝中心",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/09.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/hardware-house-garden-shop?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "shopping"
+                        ]
+                    },
+                    {
+                        "id": "clothing-accessories-shop",
+                        "title": "服飾與配件",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/09.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/clothing-accessories-shop?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "shopping"
+                        ]
+                    },
+                    {
+                        "id": "sport-outdoor-shop",
+                        "title": "戶外運動",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/09.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/sport-outdoor-shop?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "shopping"
+                        ]
+                    },
+                    {
+                        "id": "shop",
+                        "title": "商店",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/09.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/shop?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "shopping"
+                        ]
+                    },
+                    {
+                        "id": "business-services",
+                        "title": "商業與服務",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/02.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/business-services?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": []
+                    },
+                    {
+                        "id": "atm-bank-exchange",
+                        "title": "ATM/銀行/匯兌",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/15.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/atm-bank-exchange?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "business-services"
+                        ]
+                    },
+                    {
+                        "id": "police-emergency",
+                        "title": "警察局/緊急事故處理",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/19.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/police-emergency?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "business-services"
+                        ]
+                    },
+                    {
+                        "id": "ambulance-services",
+                        "title": "救護車服務",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/19.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/ambulance-services?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "police-emergency"
+                        ]
+                    },
+                    {
+                        "id": "fire-department",
+                        "title": "消防大隊",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/19.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/fire-department?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "police-emergency"
+                        ]
+                    },
+                    {
+                        "id": "police-station",
+                        "title": "警察局",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/19.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/police-station?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "police-emergency"
+                        ]
+                    },
+                    {
+                        "id": "post-office",
+                        "title": "郵局",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/20.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/post-office?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "business-services"
+                        ]
+                    },
+                    {
+                        "id": "tourist-information",
+                        "title": "旅客服務中心",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/21.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/tourist-information?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "business-services"
+                        ]
+                    },
+                    {
+                        "id": "petrol-station",
+                        "title": "加油站",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/18.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/petrol-station?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "business-services"
+                        ]
+                    },
+                    {
+                        "id": "ev-charging-station",
+                        "title": "電動汽車充電站",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/81.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/ev-charging-station?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "business-services"
+                        ]
+                    },
+                    {
+                        "id": "car-rental",
+                        "title": "汽車租賃",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/17.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/car-rental?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "business-services"
+                        ]
+                    },
+                    {
+                        "id": "car-dealer-repair",
+                        "title": "汽車業者/維修",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/16.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/car-dealer-repair?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "business-services"
+                        ]
+                    },
+                    {
+                        "id": "travel-agency",
+                        "title": "旅行社",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/02.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/travel-agency?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "business-services"
+                        ]
+                    },
+                    {
+                        "id": "communication-media",
+                        "title": "通訊/媒體",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/02.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/communication-media?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "business-services"
+                        ]
+                    },
+                    {
+                        "id": "business-industry",
+                        "title": "商業/工業",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/02.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/business-industry?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "business-services"
+                        ]
+                    },
+                    {
+                        "id": "service",
+                        "title": "服務",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/02.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/service?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "business-services"
+                        ]
+                    },
+                    {
+                        "id": "facilities",
+                        "title": "設施",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/04.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/facilities?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": []
+                    },
+                    {
+                        "id": "hospital-health-care-facility",
+                        "title": "醫院或健康護理機構",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/26.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/hospital-health-care-facility?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "facilities"
+                        ]
+                    },
+                    {
+                        "id": "hospital",
+                        "title": "醫院",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/26.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/hospital?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "hospital-health-care-facility"
+                        ]
+                    },
+                    {
+                        "id": "government-community-facility",
+                        "title": "政府或社區設施",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/04.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/government-community-facility?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "facilities"
+                        ]
+                    },
+                    {
+                        "id": "education-facility",
+                        "title": "教育機構",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/25.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/education-facility?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "facilities"
+                        ]
+                    },
+                    {
+                        "id": "library",
+                        "title": "圖書館",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/27.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/library?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "facilities"
+                        ]
+                    },
+                    {
+                        "id": "fair-convention-facility",
+                        "title": "展示會和會場設施",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/24.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/fair-convention-facility?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "facilities"
+                        ]
+                    },
+                    {
+                        "id": "parking-facility",
+                        "title": "停車場",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/28.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/parking-facility?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "facilities"
+                        ]
+                    },
+                    {
+                        "id": "toilet-rest-area",
+                        "title": "公共廁所 / 休息區",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/29.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/toilet-rest-area?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "facilities"
+                        ]
+                    },
+                    {
+                        "id": "sports-facility-venue",
+                        "title": "體育設施/場地",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/30.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/sports-facility-venue?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "facilities"
+                        ]
+                    },
+                    {
+                        "id": "facility",
+                        "title": "設施",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/04.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/facility?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "facilities"
+                        ]
+                    },
+                    {
+                        "id": "religious-place",
+                        "title": "宗教場所",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/39.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/religious-place?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "facilities"
+                        ]
+                    },
+                    {
+                        "id": "leisure-outdoor",
+                        "title": "休閒和戶外活動",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/07.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/leisure-outdoor?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": []
+                    },
+                    {
+                        "id": "recreation",
+                        "title": "娛樂",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/07.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/recreation?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "leisure-outdoor"
+                        ]
+                    },
+                    {
+                        "id": "amusement-holiday-park",
+                        "title": "主題樂園",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/34.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/amusement-holiday-park?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "leisure-outdoor"
+                        ]
+                    },
+                    {
+                        "id": "zoo",
+                        "title": "動物園",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/34.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/zoo?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "amusement-holiday-park"
+                        ]
+                    },
+                    {
+                        "id": "administrative-areas-buildings",
+                        "title": "行政管理區/大樓",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/06.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/administrative-areas-buildings?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": []
+                    },
+                    {
+                        "id": "administrative-region",
+                        "title": "行政區域",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/06.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/administrative-region?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "administrative-areas-buildings"
+                        ]
+                    },
+                    {
+                        "id": "city-town-village",
+                        "title": "城市、鄉鎮或村落",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/35.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/city-town-village?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "administrative-areas-buildings"
+                        ]
+                    },
+                    {
+                        "id": "outdoor-area-complex",
+                        "title": "戶外區/綜合區",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/06.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/outdoor-area-complex?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "administrative-areas-buildings"
+                        ]
+                    },
+                    {
+                        "id": "building",
+                        "title": "建築物",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/06.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/building?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "administrative-areas-buildings"
+                        ]
+                    },
+                    {
+                        "id": "street-square",
+                        "title": "街道或廣場",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/06.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/street-square?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "administrative-areas-buildings"
+                        ]
+                    },
+                    {
+                        "id": "intersection",
+                        "title": "交叉點",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/06.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/intersection?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "administrative-areas-buildings"
+                        ]
+                    },
+                    {
+                        "id": "postal-area",
+                        "title": "郵政區",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/06.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/postal-area?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "administrative-areas-buildings"
+                        ]
+                    },
+                    {
+                        "id": "natural-geographical",
+                        "title": "天然或區域性景點",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/08.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/natural-geographical?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": []
+                    },
+                    {
+                        "id": "body-of-water",
+                        "title": "水域",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/36.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/body-of-water?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "natural-geographical"
+                        ]
+                    },
+                    {
+                        "id": "mountain-hill",
+                        "title": "山岳或丘陵",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/08.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/mountain-hill?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "natural-geographical"
+                        ]
+                    },
+                    {
+                        "id": "undersea-feature",
+                        "title": "海底地形特徵",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/08.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/undersea-feature?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "natural-geographical"
+                        ]
+                    },
+                    {
+                        "id": "forest-heath-vegetation",
+                        "title": "森林、荒原或其他植被",
+                        "icon": "https://download.vcdn.data.here.com/p/d/places2/icons/categories/08.icon",
+                        "type": "urn:nlp-types:category",
+                        "href": "https://places.ls.hereapi.com/places/v1/categories/places/forest-heath-vegetation?app_id=LKO34glU2MBEVbcOD5mQ&app_code=A2ta_nQ8HRYwenju5HFG5Q",
+                        "system": "places",
+                        "within": [
+                            "natural-geographical"
+                        ]
+                    }
+                ]
+            }
+
+            var hash = new L.Hash(map);
+
+            var loaded_tile = [];
+
+            var osm_tile =
+                'https://1.base.maps.ls.hereapi.com/maptile/2.1/basetile/newest/normal.day/{z}/{x}/{y}/256/png8?apiKey=kVpNlN_Zq68gCvCKaZGJA8No9l-9nQfWKls02XySZus';
+
+            const osm = L.tileLayer(osm_tile, {
+                maxZoom: 19,
+                opacity: 0.8,
+                // detectRetina: pixelRatio === 1 ? false : true,
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).setZIndex(10).addTo(map);
+
+            const singapore_place_group = new L.featureGroup().setZIndex(40).addTo(map);
+
+            L.control.scale().addTo(map);
+
+            function getDisplayPrio(zoom) {
+                if (zoom <= 10) {
+                    return 44
+                } else if (zoom > 10 && zoom <= 12) {
+                    return 44
+                } else if (zoom > 12 && zoom <= 14) {
+                    return 30
+                } else if (zoom > 14 && zoom <= 16) {
+                    return 20
+                } else if (zoom > 16 && zoom <= 18) {
+                    return 15
+                } else if (zoom > 18 && zoom <= 19) {
+                    return 10
+                } else if (zoom > 19 && zoom <= 20) {
+                    return 0
+                }
+
+
+            }
+
+
+            var jsonLayer = L.featureGroup();
+            osm.on('tileload', function (event) {
+                var z = event.coords.z;
+                var x = event.coords.x;
+                var y = event.coords.y;
+                var tile_url = 'https://xyz.api.here.com/hub/spaces/' + singapore_places_id +
+                    '/tile/web/' + z + '_' + x + '_' + y + '?p.display_prio>' + getDisplayPrio(z) +
+                    '&access_token=' +
+                    singapore_places_token;
+                $.getJSON(tile_url, function (json) {
+                    L.geoJSON(json).getLayers().forEach(function (object) {
+                        jsonLayer.addLayer(L.geoJSON(object['feature'], {
+                            pointToLayer: function (geoJsonPoint, latlng) {
+                                const official_poi_name = geoJsonPoint[
+                                    'properties'][
+                                    'OfficialPOIName'
+                                ];
+                                const category = geoJsonPoint['properties'][
+                                    'LCMSEngCategoryName'
+                                ];
+                                const icon_id = parseInt(Math.random() * 84);
+                                return L.marker(latlng, {
+                                    icon: L.icon({
+                                        iconUrl: place_category['items'][icon_id]['icon'],
+                                        iconSize: [30, 32],
+                                        iconAnchor: [13, 32]
+                                    })
+                                }).bindPopup(official_poi_name + '<br>' +
+                                    category, {
+                                        offset: L.point(0, -20)
+                                    });
+                            }
+                        }));
+                    })
+
+                });
+            });
+
+            map.on('moveend', function (event) {
+                jsonLayer.eachLayer(function (layer) {
+                    layer.getLayers().forEach(function (object) {
+                        console.log(object['feature']);
+                        var lat = object['feature']['geometry']['coordinates'][0];
+                        var lng = object['feature']['geometry']['coordinates'][1];
+                        if (map.getBounds().contains(L.latLng(lat, lng))) {
+                            jsonLayer.removeLayer(layer);
+                        }
+                    })
+                })
+            });
+
+            map.on('zoomend', function (e) {
+                jsonLayer.clearLayers();
+            })
+
+            jsonLayer.addTo(map);
+            // file:///C:/Users/guanlwu/Documents/GitHub/sgp_test_map/index.html#17/1.33475/103.89801
+        </script>
+    </div>
+</body>
