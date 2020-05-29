@@ -1,11 +1,9 @@
 sources:
-  omv:
-    type: OMV
-    max_zoom: 20
-    url: https://vector.hereapi.com/{z}/{x}/{y}/omv?apikey=kVpNlN_Zq68gCvCKaZGJA8No9l-9nQfWKls02XySZus
-    min_display_zoom: 1
-    tiled: true
-
+    omv:
+        type: MVT
+        url: https://vector.hereapi.com/v2/vectortiles/base/mc/{z}/{x}/{y}/omv?apikey=kVpNlN_Zq68gCvCKaZGJA8No9l-9nQfWKls02XySZus
+        max_zoom: 20
+        
 scene:
   background:
     color: global.land_color
@@ -551,7 +549,7 @@ global:
 
 textures:
   icon_library:
-    url: icons/sprite-2x.png
+    url: https://js.api.here.com/v3/3.1/styles/omv/icons/sprite-2x.png
     # filtering: mipmap
     density: 2
     sprites:
@@ -576,10 +574,10 @@ textures:
 fonts:
   FiraGO:
     - weight: normal
-      url: ../fonts/FiraGO-Map.woff
+      url: https://js.api.here.com/v3/3.1/styles/fonts/FiraGO-Map.woff
     - weight: normal
       style: italic
-      url: ../fonts/FiraGO-Italic.woff
+      url: https://js.api.here.com/v3/3.1/styles/fonts/FiraGO-Italic.woff
 
 styles:
   shields:
