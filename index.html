@@ -8,13 +8,7 @@
     <script src="./scripts/leaflet.js"></script>
     <script src="./scripts/jquery-3.5.0.min.js"></script>
     <script src="./scripts/leaflet-hash.js"></script>
-    <!-- <script src="https://unpkg.com/tangram@0.15.1/dist/tangram.min.js"></script> -->
-    <!-- <script src='https://npmcdn.com/@turf/turf/turf.min.js'></script>
-    <script src="./scripts/alertifyjs/alertify.min.js"></script>
-    <script src="./scripts/leaflet.spin.min.js"></script>
-    <script src="./scripts/spin.min.js"></script>
-    <link rel="stylesheet" href="./scripts/alertifyjs/css/alertify.min.css" />
-    <link rel="stylesheet" href="./scripts/alertifyjs/css/themes/default.min.css" /> -->
+    <script src="https://unpkg.com/tangram@0.15.1/dist/tangram.min.js"></script>
     <style>
         html,
         body {
@@ -973,17 +967,13 @@
 
             var hash = new L.Hash(map);
 
-            var loaded_tile = [];
+            const here_base = Tangram.leafletLayer({
+                scene: './scripts/normal.day.yaml'
+            });
+            here_base.addTo(map);
 
-            var osm_tile =
-                'https://1.base.maps.ls.hereapi.com/maptile/2.1/basetile/newest/normal.day/{z}/{x}/{y}/256/png8?apiKey=kVpNlN_Zq68gCvCKaZGJA8No9l-9nQfWKls02XySZus';
+            map.attributionControl.addAttribution("© HERE 2020");
 
-            const osm = L.tileLayer(osm_tile, {
-                maxZoom: 19,
-                opacity: 0.8,
-                // detectRetina: pixelRatio === 1 ? false : true,
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            }).setZIndex(10).addTo(map);
 
             const singapore_place_group = new L.featureGroup().setZIndex(40).addTo(map);
 
@@ -995,11 +985,11 @@
                 } else if (zoom > 10 && zoom <= 12) {
                     return 44
                 } else if (zoom > 12 && zoom <= 14) {
-                    return 30
+                    return 40
                 } else if (zoom > 14 && zoom <= 16) {
-                    return 20
+                    return 30
                 } else if (zoom > 16 && zoom <= 18) {
-                    return 15
+                    return 20
                 } else if (zoom > 18 && zoom <= 19) {
                     return 10
                 } else if (zoom > 19 && zoom <= 20) {
@@ -1009,9 +999,14 @@
 
             }
 
+            const marker_bounds_list = []
+
+            function getIcon() {
+                return parseInt(Math.random() * 84)
+            }
 
             var jsonLayer = L.featureGroup();
-            osm.on('tileload', function (event) {
+            here_base.on('tileload', function (event) {
                 var z = event.coords.z;
                 var x = event.coords.x;
                 var y = event.coords.y;
@@ -1022,6 +1017,8 @@
                         singapore_places_token;
                     $.getJSON(tile_url, function (json) {
                         L.geoJSON(json).getLayers().forEach(function (object) {
+
+
                             jsonLayer.addLayer(L.geoJSON(object['feature'], {
                                 pointToLayer: function (geoJsonPoint, latlng) {
                                     const official_poi_name = geoJsonPoint[
@@ -1032,23 +1029,41 @@
                                         'LCMSEngCategoryName'
                                     ];
                                     const icon_id = parseInt(Math.random() *
-                                    84);
+                                        84);
+
+                                    var iconUrl = place_category['items'][
+                                        icon_id
+                                    ]['icon'];
+
+                                    var iconSettings = {
+                                        mapIconUrl: '<!DOCTYPE html><html><body><svg height="100%" width="100%" width="100" height="100"><image xlink:href="' +
+                                            place_category['items'][icon_id]
+                                            ['icon'] +
+                                            '" x="45%" y="0%" height="30px" width="30px"/><text fill="#000000" x="50%" y="25%" dominant-baseline="middle" text-anchor="middle" font-size="8" font-family="Verdana">' +
+                                            official_poi_name +
+                                            '</text><defs><filter id="shadow" x="0%" y="0%" width="150%" height="150%"><feGaussianBlur stdDeviation="2 2" result="shadow"/><feOffset dx="0" dy="0"/></filter></defs><text style="filter: url(#shadow); fill: white" fill="#000000" x="50%" y="25%" dominant-baseline="middle" text-anchor="middle" font-size="8" font-family="Verdana">' +
+                                            official_poi_name +
+                                            '</text><text fill="#000000" x="50%" y="32%" dominant-baseline="middle" text-anchor="middle" font-size="8" font-family="Verdana">' +
+                                            place_category['items'][icon_id]
+                                            ['title'] +
+                                            '</text><text style="filter: url(#shadow); fill: white" fill="#000000" x="50%" y="32%" dominant-baseline="middle" text-anchor="middle" font-size="8" font-family="Verdana">' +
+                                            place_category['items'][icon_id]
+                                            ['title'] +
+                                            '</text></svg></body></html>',
+                                    }
+
+                                    var divIcon = L.divIcon({
+                                        className: "leaflet-data-marker",
+                                        html: iconSettings.mapIconUrl,
+                                        iconAnchor: [110, 30],
+                                        iconSize: [200, 150],
+                                        popupAnchor: [-5, 0]
+                                    })
+
                                     return L.marker(latlng, {
-                                        icon: L.icon({
-                                            iconUrl: place_category[
-                                                'items'][
-                                                icon_id
-                                            ][
-                                                'icon'
-                                            ],
-                                            iconSize: [30, 32],
-                                            iconAnchor: [13, 32]
-                                        })
-                                    }).bindPopup(official_poi_name +
-                                        '<br>' +
-                                        category, {
-                                            offset: L.point(0, -20)
-                                        });
+                                        riseOnHover: true,
+                                        icon: divIcon,
+                                    })
                                 }
                             }));
                         })
@@ -1060,14 +1075,11 @@
 
             map.on('moveend', function (event) {
                 jsonLayer.eachLayer(function (layer) {
-                    layer.getLayers().forEach(function (object) {
-                        console.log(object['feature']);
-                        var lat = object['feature']['geometry']['coordinates'][0];
-                        var lng = object['feature']['geometry']['coordinates'][1];
-                        if (map.getBounds().contains(L.latLng(lat, lng))) {
+                    layer.getLayers().forEach(function (element) {
+                        if (!map.getBounds().contains(element.getLatLng())) {
                             jsonLayer.removeLayer(layer);
                         }
-                    })
+                    });
                 })
             });
 
@@ -1076,7 +1088,6 @@
             })
 
             jsonLayer.addTo(map);
-            // file:///C:/Users/guanlwu/Documents/GitHub/sgp_test_map/index.html#17/1.33475/103.89801
         </script>
     </div>
 </body>
