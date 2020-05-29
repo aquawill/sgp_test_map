@@ -31,35 +31,7 @@
         <script type="text/javascript" charset="UTF-8">
             const singapore_places_token = 'AC92qafQTXaRYg8LnML5ggA';
             const singapore_places_id = 'tPTeKOPa';
-            const width = screen.width;
-            const height = screen.height;
-            const screenRatio = screen.width / screen.height;
-            const pixelRatio = window.devicePixelRatio || 1;
-            const ppi = pixelRatio === 1 ? 72 : 320
-            const tile_size = pixelRatio === 1 ? 256 : 512
-            var road_Polyline_list = [];
-            var tile_xyz_list = [];
-            var heatmap_layer_loaded = false;
-            var heatmap_layer_opened = false;
-            // const default_icon_size = pixelRatio === 1 ? 36 : 36;
-            // const default_icon_anchor = pixelRatio === 1 ? 18 : 18;
-            const default_icon_size = 36;
-            const default_icon_anchor = 18;
-            const map = L.map('map', {
-                maxZoom: 19,
-                minZoom: 6,
-                zoomSnap: 1,
-                trackResize: true
-            });
-            map.on('load', function () {
-                // tile_xyz_list = get_tile_xyz(map.getBounds(), map.getZoom());
-            });
-            map.setView({
-                lat: 1.3139961,
-                lng: 103.7041626
-            }, 8);
-
-            var place_category = {
+            const place_category = {
                 "items": [{
                         "id": "eat-drink",
                         "title": "餐飲",
@@ -965,12 +937,23 @@
                 ]
             }
 
-            var hash = new L.Hash(map);
+            
 
             const here_base = Tangram.leafletLayer({
-                scene: './scripts/normal.day.yaml'
+                scene: 'https://aquawill.github.io/sgp_test_map/scripts/normal.day.yaml'
             });
-            here_base.addTo(map);
+
+            const map = L.map('map', {
+                center: [1.3139961, 103.7041626],
+                maxZoom: 17,
+                minZoom: 6,
+                zoomSnap: 1,
+                trackResize: true,
+                zoom: 11,
+                layers: [here_base]
+            });
+
+            var hash = new L.Hash(map);
 
             map.attributionControl.addAttribution("© HERE 2020");
 
@@ -990,11 +973,7 @@
                     return 30
                 } else if (zoom > 16 && zoom <= 18) {
                     return 20
-                } else if (zoom > 18 && zoom <= 19) {
-                    return 10
-                } else if (zoom > 19 && zoom <= 20) {
-                    return 0
-                }
+                } 
 
 
             }
@@ -1087,7 +1066,7 @@
                 jsonLayer.clearLayers();
             })
 
-            jsonLayer.addTo(map);
+            // jsonLayer.addTo(map);
         </script>
     </div>
 </body>
